@@ -93,7 +93,7 @@ def _get_square_inches_overlap( claims : List[ tuple ] ) -> Tuple[ int, int ]:
 
 			overlap_coords[ ( x, y ) ].append( id )
 
-	square_inches_overlap = len( [ z for z in overlap_coords if len( overlap_coords[ z ]) > 1 ] )
+	square_inches_overlap = len( [ z for z in overlap_coords if len( overlap_coords[ z ] ) > 1 ] )
 	id_of_claim_with_no_overlap = [ z for z in overlaps if len( overlaps[ z ] ) == 0 ][ 0 ]
 	return square_inches_overlap, id_of_claim_with_no_overlap
 
