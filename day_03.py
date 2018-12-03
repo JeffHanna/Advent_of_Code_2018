@@ -126,8 +126,7 @@ def _claims_parser( puzzle_input_filename : str ) -> List[ tuple ]:
 	with open( puzzle_input_filename, 'r' ) as f:
 		for line in f.readlines( ):
 			line = re.sub( re_sub_01, "", line )
-			line = re.sub( re_sub_02, ",", line )
-			line_parts = line.split( ',' )
+			line_parts = re.sub( re_sub_02, ",", line ).split( ',' )
 			claims.append( ( line_parts[ 0 ], int( line_parts[ 1 ] ), int( line_parts[ 2 ] ), int( line_parts[ 3 ] ), int( line_parts[ -1 ] ) ) )
 
 
