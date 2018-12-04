@@ -117,17 +117,12 @@ def _claims_parser( puzzle_input_filename : str ) -> List[ tuple ]:
 		:``list``:  a list of tuples ( id, x_coord, y_coord, width, height )
 	"""
 
-	re_sub_01 = r"[# ]"
-	re_sub_02 = r"[@:x]"
-
 	claims = [ ]
 
 	with open( puzzle_input_filename, 'r' ) as f:
 		for line in f.readlines( ):
-			line = re.sub( re_sub_01, "", line )
-			line_parts = re.sub( re_sub_02, ",", line ).split( ',' )
-			claims.append( ( line_parts[ 0 ], int( line_parts[ 1 ] ), int( line_parts[ 2 ] ), int( line_parts[ 3 ] ), int( line_parts[ -1 ] ) ) )
-
+			index, x, y, w, h = map( int, re.findall( r'\d+', line ) )
+			claims.append( ( index, x, y, w, h ) )
 	return claims
 
 
