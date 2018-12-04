@@ -43,9 +43,10 @@ What letters are common between the two correct box IDs? (In the example above, 
 
 from collections import Counter
 from difflib import SequenceMatcher
+from typing import Sequence
 
 
-def calculate_checksum( input_lines: list ) -> int:
+def calculate_checksum( input_lines: Sequence[ str ] ) -> int:
 	"""
 	[summary]
 
@@ -56,8 +57,8 @@ def calculate_checksum( input_lines: list ) -> int:
 		int -- The calcuated checksum from the list of box ids.
 	"""
 
-	twos = 0
-	threes = 0
+	twos : int = 0
+	threes : int = 0
 
 	for il in input_lines:
 		counter = Counter( il )
@@ -69,12 +70,12 @@ def calculate_checksum( input_lines: list ) -> int:
 	return twos * threes
 
 
-def get_matching_box_ids( input_list: list ) -> str:
+def get_matching_box_ids( input_lines: Sequence[ str ] ) -> str:
 	"""
 	Finds the two box IDs with the highest ratio of identical characters and returns the characters common to both of those box ids.
 
 	Arguments:
-		input_list {list} -- list of box ids
+		input_lines {list} -- list of box ids
 
 	Returns:
 		str -- characters common to the two box ids with the highest comparison ratio.
