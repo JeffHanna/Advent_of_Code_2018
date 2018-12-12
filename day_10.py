@@ -141,3 +141,63 @@ After 3 seconds, the message appeared briefly: HI. Of course, your message will 
 
 What message will eventually appear in the sky?
 """
+
+from collections import namedtuple
+from itertools import count
+import numpy
+import re
+
+
+def _parse( filepath ):
+	nums = re.compile( R'[+-]?\d+(?:\.\d+)?' )
+	Light  = namedtuple( 'Light', 'p_x p_y v_x v_y' )
+	with open( filepath, 'r' ) as f:
+		lines = f.readlines( )
+	
+	lights = [ ]
+	for line in lines:
+		vals = [ int( x ) for x in nums.findall( line ) ]
+		lights.append( Light( vals[ 0 ], vals[ 1 ], vals[ 2 ], vals[ 3 ] ) )
+
+	return lights
+
+
+def _simulate( lights ) -> tuple:
+	sky_height = 0
+	Light_Position = namedtuple( 'Light_Position', 'x, y' )
+	light_positions = [ ]
+	
+	for time in count( ):
+		new_time = time + 1
+		new_light_positions = [ Light_Position( x = l.p_x + l.v_x * new_time, y = l.p_y + l.v_y * new_time ) for l in lights ]
+		new_light_positions = sorted( new_light_positions, key = lambda l: l.y )
+		min_y = new_light_positions[ 0 ].y
+		max_y = new_light_positions[ -1 ].y
+
+		new_sky_height = max_y - min_y
+		if not sky_height or new_sky_height <= sky_height:
+			sky_height = new_sky_height
+			light_positions = new_light_positions
+		else:
+			break
+
+	xs, ys = list( zip( *light_positions ) )
+	xs = sorted( xs )
+	min_x = xs[ 0 ]
+	max_x = xs[ -1 ]
+	x_range = range( min_x - 1, max_x + 2 )
+
+	ys = sorted( ys )
+	min_y = ys[ 0 ]
+	max_y = ys[ -1 ]
+	y_range = range( min_y - 1, max_y + 2 )
+
+	return '\n'.join( ''.join( '#'  if ( i, j ) in light_positions else ' ' for i in x_range ) for j in y_range ), time
+
+
+
+if __name__ == '__main__':
+	lights = _parse( r'day_10_input.txt' )
+	message, time = _simulate( lights )
+	print( 'The message {0} will appear after {1} seconds.'.format( message, time ))
+
