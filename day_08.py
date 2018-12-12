@@ -51,6 +51,7 @@ What is the value of the root node?
 """
 
 from collections import defaultdict
+from itertools import count
 
 _CHILD_NODE_KEY = 'children'
 _METADATA_NODE_KEY = 'metadata'
@@ -89,14 +90,16 @@ def _build_node_tree( data: list ) -> tuple:
 
 	children_count, metadata_count, *data = data # A node header is 2 ints.
 
-	for c in range( children_count ):
+	counter = count( )
+	while next( counter ) < children_count:
 		child_node, data = _build_node_tree( data )
-		root_node[ _CHILD_NODE_KEY ].append( child_node )
+		root_node[ _CHILD_NODE_KEY ].append( child_node ) # can't do .get( ) here as it may be setting up a new defaultdict.
 
 	metadata_vals = data[ : metadata_count ]
-	root_node[ _METADATA_NODE_KEY].extend( metadata_vals )
+	root_node[ _METADATA_NODE_KEY ].extend( metadata_vals ) # can't do .get( ) here as it may be setting up a new defaultdict.
 
 	return root_node, data[ metadata_count: ]
+
 
 def _sum_all_metadata( node: dict ) -> int:
 	"""
@@ -109,7 +112,14 @@ def _sum_all_metadata( node: dict ) -> int:
 		int -- [description]
 	"""
 
-	return sum( node[ _METADATA_NODE_KEY ] ) + sum( _sum_all_metadata( x ) for x in node[ _CHILD_NODE_KEY ] )
+	return sum( node.get( _METADATA_NODE_KEY ) ) + sum( _sum_all_metadata( x ) for x in node.get( _CHILD_NODE_KEY, [ ] ) )
+
+
+def _value_of_node( node: dict ) -> int:
+	if not node.get( _CHILD_NODE_KEY ):
+		return sum( node[ _METADATA_NODE_KEY ] )
+
+	return sum( _value_of_node( node.get( _CHILD_NODE_KEY )[ x - 1 ] ) for x in node.get( _METADATA_NODE_KEY ) if x <= len( node.get( _CHILD_NODE_KEY ) ) )
 
 
 if __name__ == '__main__':
@@ -118,4 +128,7 @@ if __name__ == '__main__':
 
 	metadata_total = _sum_all_metadata( root_node )
 	print( "The sum of all metadata nodes is: ", metadata_total )
+
+	node_value = _value_of_node( root_node )
+	print( "The value of the root node is: ", node_value )
 

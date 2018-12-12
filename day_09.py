@@ -60,7 +60,7 @@ Amused by the speed of your answer, the Elves are curious:
 What would the new winning Elf's score be if the number of the last marble were 100 times larger?
 """
 
-from collections import defaultdict
+from collections import defaultdict, deque
 from itertools import cycle
 import re
 
@@ -77,13 +77,13 @@ class Game( ):
 	the end-game trigger. Once the game is simulated the winning elf and their score are presented.
 	"""
 
-	def __init__( self, player_count: int, final_marble_value: int, part_2_scale : int = False ):
+	def __init__( self, player_count: int, final_marble_value: int, part_2_scale : bool = False ):
 		self._player_count = player_count
 		self._players = defaultdict( list )
 		self._final_marble_value = final_marble_value if not part_2_scale else final_marble_value * 100
 		self._current_marble_idx = 0
 		self._marble = 0
-		self._circle = [ self._marble ]
+		self._circle = deque( [ self._marble ] )
 
 
 	def _calculate_score( self ):
@@ -103,7 +103,7 @@ class Game( ):
 		print( 'The winning elf is: {0} with a score of: {1}'.format( winning_player, high_score ) )
 
 
-	def _turn( self, player: int ):
+	def _turn( self, player: int ) -> bool:
 		"""
 		Simulates a game turn of the elf marble game. The turn rules can be found in the module docstring.
 
@@ -116,7 +116,8 @@ class Game( ):
 		if self._marble % 23 == 0:
 			extra_score_marble_idx = ( self._current_marble_idx - 7 ) % len( self._circle )
 			self._current_marble_idx = ( extra_score_marble_idx )
-			extra_score_marble = self._circle.pop( extra_score_marble_idx )
+			extra_score_marble = self._circle[ extra_score_marble_idx ]
+			self._circle.remove( self._circle[ extra_score_marble_idx ] )
 			self._players[ player ].extend( [ self._marble, extra_score_marble ] )
 		else:
 			insert_location = ( self._current_marble_idx + 1 ) % len( self._circle ) + 1
@@ -125,6 +126,9 @@ class Game( ):
 
 		if self._marble == self._final_marble_value:
 			self._calculate_score( )
+			return True
+
+		return False
 
 
 	def play( self ):
@@ -132,14 +136,20 @@ class Game( ):
 		Public method to start the game once the initial state is established.
 		"""
 
-		for p in cycle( range( 1, self._player_count + 1 ) ):
-			self._turn( p )
+		game_over = False
+		while not game_over:
+			for p in cycle( range( 1, self._player_count + 1 ) ):
+				game_over = self._turn( p )
+				if game_over:
+					break
 
 
 
 if __name__ == '__main__':
 	player_count, final_marble_value = _parse( r'day_09_input.txt' )
 	game_1 = Game( player_count, final_marble_value )
+	print( 'Playing Game 1...' )
 	game_1.play( )
 	game_2 = Game( player_count, final_marble_value, part_2_scale = True )
+	print( 'Playing Game 2...' )
 	game_2.play( )
