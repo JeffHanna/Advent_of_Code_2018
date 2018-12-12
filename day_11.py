@@ -53,26 +53,92 @@ For grid serial number 42, the largest 3x3 square's top-left is 21,61 (with a to
 What is the X,Y coordinate of the top-left fuel cell of the 3x3 square with the largest total power?
 
 Your puzzle input is 7315.
+
+--- Part Two ---
+You discover a dial on the side of the device; it seems to let you select a square of any size, not just 3x3. Sizes from 1x1 to 300x300 are supported.
+
+Realizing this, you now must find the square of any size with the largest total power. Identify this square by including its size as a third parameter after the top-left coordinate: a 9x9 square with a top-left corner of 3,5 is identified as 3,5,9.
+
+For example:
+
+For grid serial number 18, the largest total square (with a total power of 113) is 16x16 and has a top-left corner of 90,269, so its identifier is 90,269,16.
+For grid serial number 42, the largest total square (with a total power of 119) is 12x12 and has a top-left corner of 232,251, so its identifier is 232,251,12.
+What is the X,Y,size identifier of the square with the largest total power?
+
+Your puzzle input is still 7315.
 """
 
 import itertools
 import numpy
 
-def _make_fuel_cell_grid( coord_max, serial_number ):
-	fuel_cells = numpy.zeros( ( coord_max,  coord_max ) )
-
-	for y, x in itertools.product( range( coord_max), range( coord_max ) ):
-		rack_id = x + 1 + 10
-		power = int( str( ( ( ( rack_id * ( y + 1 ) ) + serial_number ) * rack_id ) // 100 )[ -1 ] ) - 5
-		fuel_cells[y][x] = power
-
-	return fuel_cells
+_SERIAL_NUMBER = 7315
 
 
-def _find_strongest_cell_block( fuel_cells ):
+def _calculate_cell_power( x: int, y: int ) -> int:
+	"""
+	Function used by numpy.fromfunction( ) to build the full 300 x 300 fuel cell array with power levels.
 
+	Arguments:
+		x {int} -- The x coordinate in the fuel cell array.
+		y {int} -- The y coordinate in the fuel cell array.
+
+	Returns:
+		int -- The fuel cell power level.
+	"""
+
+	rack_id = x + 1 + 10
+	return ( ( ( ( ( rack_id * ( y + 1 ) ) + _SERIAL_NUMBER ) * rack_id ) // 100 ) % 10 ) - 5
+
+
+def _get_block_power( fuel_cells: list, coord_x: int, coord_y: int ) -> float:
+	"""
+	Determines the power level of a 3 x 3 block within the fuel cell array.
+	X and Y coordinates into the fuel cells array are provided. A smaller 3 x 3 array
+	is extracted from the fuel cells array and numpy.cumsum( ) is used to calculate the
+	sum of all values in that new smaller 2D array.
+
+	Arguments:
+		fuel_cells {list} -- The 300 x 300 numpy array of fuel cell power levels.
+		coord_x {int} -- The starting x coordinate in the fuel cells array.
+		coord_y {int} -- The starting y coordinate in the fuel cells array.
+
+	Returns:
+		float -- The total power of all 9 cells in the block.
+	"""
+
+	block = numpy.zeros( ( 3, 3 ) )
+
+	for y, x in itertools.product( range( 3 ), range( 3 ) ):
+		block[ x ][ y ] =  fuel_cells[ coord_x + x ][ coord_y + y ]
+
+	return numpy.cumsum( block )[ -1 ]
+
+
+def _find_strongest_cell_block( fuel_cells: list ) -> tuple:
+	"""
+	Finds the X, Y upper left ( 1-based ) coordinates of the 3 x 3 block within the fuel cells array
+	that has the most power remaining.
+
+	Arguments:
+		fuel_cells {list} -- A 300 x 300 numpy array of fuel cell power levels.
+
+	Returns:
+		tuple -- The 1-based X and Y coordinates of the upper left cell of the 3 x 3 block with the highest power levels.
+	"""
+
+	highest_power_level = -999
+	location = ( )
+
+	for y, x in itertools.product( range( 298 ), range( 298 ) ):
+		power = _get_block_power( fuel_cells, x, y )
+		if power > highest_power_level:
+			highest_power_level = power
+			location = ( x + 1, y + 1 )
+
+	return location
 
 
 if __name__ == '__main__':
-	fuel_cells = _make_fuel_cell_grid( 300, 7315 )
-	_find_strongest_cell_block( fuel_cells )
+	fuel_cells = numpy.fromfunction( _calculate_cell_power, ( 300, 300 ) )
+	x, y = _find_strongest_cell_block( fuel_cells )
+	print( 'The location of the strongest fuel cell block is: {0}, {1}.'.format( x, y ) )
