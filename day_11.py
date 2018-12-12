@@ -90,7 +90,7 @@ def _calculate_cell_power( x: int, y: int ) -> int:
 	return ( ( ( ( ( rack_id * ( y + 1 ) ) + _SERIAL_NUMBER ) * rack_id ) // 100 ) % 10 ) - 5
 
 
-def _get_block_power( fuel_cells: list, coord_x: int, coord_y: int ) -> float:
+def _get_block_power( fuel_cells: list, coord_x: int, coord_y: int, square_dim: int ) -> float:
 	"""
 	Determines the power level of a 3 x 3 block within the fuel cell array.
 	X and Y coordinates into the fuel cells array are provided. A smaller 3 x 3 array
@@ -101,20 +101,24 @@ def _get_block_power( fuel_cells: list, coord_x: int, coord_y: int ) -> float:
 		fuel_cells {list} -- The 300 x 300 numpy array of fuel cell power levels.
 		coord_x {int} -- The starting x coordinate in the fuel cells array.
 		coord_y {int} -- The starting y coordinate in the fuel cells array.
+		square_dim {1} -- The value for the width and height of the power block.
 
 	Returns:
 		float -- The total power of all 9 cells in the block.
 	"""
 
-	block = numpy.zeros( ( 3, 3 ) )
+	block = numpy.zeros( ( square_dim, square_dim ) )
 
-	for y, x in itertools.product( range( 3 ), range( 3 ) ):
-		block[ x ][ y ] =  fuel_cells[ coord_x + x ][ coord_y + y ]
+	try:
+		for y, x in itertools.product( range( square_dim ), range( square_dim ) ):
+			block[ x ][ y ] =  fuel_cells[ coord_x + x ][ coord_y + y ]
 
-	return numpy.cumsum( block )[ -1 ]
+		return numpy.cumsum( block )[ -1 ]
+	except IndexError:
+		return -999
 
 
-def _find_strongest_cell_block( fuel_cells: list ) -> tuple:
+def _find_strongest_cell_block( fuel_cells: list, variable_size = False ) -> tuple:
 	"""
 	Finds the X, Y upper left ( 1-based ) coordinates of the 3 x 3 block within the fuel cells array
 	that has the most power remaining.
@@ -128,17 +132,26 @@ def _find_strongest_cell_block( fuel_cells: list ) -> tuple:
 
 	highest_power_level = -999
 	location = ( )
+	largest_square_dim = 0
 
-	for y, x in itertools.product( range( 298 ), range( 298 ) ):
-		power = _get_block_power( fuel_cells, x, y )
-		if power > highest_power_level:
-			highest_power_level = power
-			location = ( x + 1, y + 1 )
+	size_range = range( 3, 4 ) if not variable_size else range( 1, 301 )
 
-	return location
+	for square_dim in size_range:
+		for y, x in itertools.product( range( 298 ), range( 298 ) ):
+			power = _get_block_power( fuel_cells, x, y, square_dim )
+			if power > highest_power_level:
+				highest_power_level = power
+				location = ( x + 1, y + 1 )
+				largest_square_dim = square_dim
+
+	return ( *location, largest_square_dim )
 
 
 if __name__ == '__main__':
 	fuel_cells = numpy.fromfunction( _calculate_cell_power, ( 300, 300 ) )
-	x, y = _find_strongest_cell_block( fuel_cells )
+	x, y, _sd = _find_strongest_cell_block( fuel_cells )
 	print( 'The location of the strongest fuel cell block is: {0}, {1}.'.format( x, y ) )
+
+	x, y, sd = _find_strongest_cell_block( fuel_cells, variable_size = True )
+	#242,13,9
+	print( 'The location and size of the strongest fuel cell block is: {0},{1},{2}'.format( x, y, sd ) )
