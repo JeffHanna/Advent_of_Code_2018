@@ -108,5 +108,5 @@ venv.bak/
 .vscode/
 
 # Personalized input data
-*input.txt
 day_03_amato.py
+day_09_bob.py
